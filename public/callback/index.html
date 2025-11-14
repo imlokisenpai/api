@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Spotify Callback</title>
+<style>
+body {
+    background: #000;
+    color: #0f0;
+    font-family: monospace;
+    padding: 40px;
+}
+</style>
+</head>
+<body>
+<h2>Spotify Authorization Code</h2>
+<p>Your code has been retrieved. Copy it from below:</p>
+
+<pre id="codeBox">Loading…</pre>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
+    if (code) {
+        document.getElementById("codeBox").textContent = code;
+        navigator.clipboard.writeText(code).catch(()=>{});
+    } else {
+        document.getElementById("codeBox").textContent = "No code found.";
+    }
+</script>
+
+</body>
+</html>
