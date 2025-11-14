@@ -1,8 +1,13 @@
+// /api/now-playing.js
 export default async function handler(req, res) {
+  // Allow browser frontend to fetch
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   try {
-    // get access token from refresh token
+    // Get access token using refresh token
     const token = await getSpotifyAccessToken();
 
+    // Fetch currently playing track
     const r = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -13,6 +18,7 @@ export default async function handler(req, res) {
 
     const data = await r.json();
 
+    // Return structured JSON
     res.status(200).json({
       playing: true,
       title: data.item.name,
@@ -27,6 +33,7 @@ export default async function handler(req, res) {
   }
 }
 
+// Helper function to get Spotify access token from refresh token
 async function getSpotifyAccessToken() {
   const refresh_token = process.env.SPOTIFY_REFRESH_TOKEN;
   const client_id = process.env.SPOTIFY_CLIENT_ID;
@@ -52,6 +59,8 @@ async function getSpotifyAccessToken() {
   });
 
   const data = await r.json();
+
   if (!data.access_token) throw new Error("Failed to get access token: " + JSON.stringify(data));
+
   return data.access_token;
 }
