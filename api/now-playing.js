@@ -1,8 +1,8 @@
-import fetch from "node-fetch";
-
 export default async function handler(req, res) {
   try {
+    // get access token from refresh token
     const token = await getSpotifyAccessToken();
+
     const r = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -28,31 +28,30 @@ export default async function handler(req, res) {
 }
 
 async function getSpotifyAccessToken() {
-  try {
-    const refresh_token = process.env.SPOTIFY_REFRESH_TOKEN;
+  const refresh_token = process.env.SPOTIFY_REFRESH_TOKEN;
+  const client_id = process.env.SPOTIFY_CLIENT_ID;
+  const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
 
-    const params = new URLSearchParams();
-    params.append("grant_type", "refresh_token");
-    params.append("refresh_token", refresh_token);
-
-    const auth = Buffer.from(
-      process.env.SPOTIFY_CLIENT_ID + ":" + process.env.SPOTIFY_CLIENT_SECRET
-    ).toString("base64");
-
-    const r = await fetch("https://accounts.spotify.com/api/token", {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: params
-    });
-
-    const data = await r.json();
-    if (!data.access_token) throw new Error("Failed to get access token");
-    return data.access_token;
-  } catch (err) {
-    console.error(err);
-    throw err;
+  if (!refresh_token || !client_id || !client_secret) {
+    throw new Error("Missing environment variables!");
   }
+
+  const params = new URLSearchParams();
+  params.append("grant_type", "refresh_token");
+  params.append("refresh_token", refresh_token);
+
+  const auth = Buffer.from(`${client_id}:${client_secret}`).toString("base64");
+
+  const r = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: params
+  });
+
+  const data = await r.json();
+  if (!data.access_token) throw new Error("Failed to get access token: " + JSON.stringify(data));
+  return data.access_token;
 }
